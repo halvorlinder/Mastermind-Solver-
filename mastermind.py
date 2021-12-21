@@ -1,5 +1,5 @@
 from math import inf
-from random import shuffle
+from random import shuffle, uniform
 COLORS = 6
 #assigns a random color to each pin, so that the guesses are a bit less predictable
 colorList = ["Blue", "Green", "Yellow", "Orange", "Purple", "Pink"]
@@ -52,8 +52,44 @@ def update(guess, constraint, possible):
         if not is_possible(comb, guess, constraint):
             remove_set.add(comb)
     possible-=remove_set
-        
 
+#Updates the symmetry table given a guess and a bool 
+def update_symmetry(symmetry, guess, no_info):
+    occurences = [0]*COLORS
+    for n in guess:
+        occurences[n] = 1 if no_info else occurences[n]+1
+        if n in symmetry["used_once"]:
+            symmetry["used_twice"].add(n)
+            for m in range(COLORS):
+                if n!=m:
+                    symmetry["table"][n][m], symmetry["table"][m][n] = 0, 0
+        symmetry["used_once"].add(n)
+    sets = dict()
+    for n, m in enumerate(occurences):
+        if not (m in sets):
+            sets[m] = set()
+        sets[m].add(n)
+    for n in range(COLORS):
+        for S in sets:
+            if not (n in S):
+                for m in S:
+                    symmetry["table"][n][m], symmetry["table"][m][n] = 0, 0
+    included = set()
+    sets = []
+    for n, row in enumerate(symmetry["table"]):
+        if n in included:
+            continue
+        group = set()
+        for m, b in enumerate(row):
+            if b==1:
+                group.add(m)
+                included.add(m)
+        sets.append(group)
+    for i, S in enumerate(sets):
+        for n in S:
+            symmetry["map"][n] = COLORS+i
+                
+     
 def main():
     #List of all possible combiinations 
     combinations = [(x,y,z,w) for x in range(COLORS) for y in range(COLORS) for z in range(COLORS) for w in range(COLORS)]
@@ -61,6 +97,14 @@ def main():
     possible = set(combinations)
     #List of all possible responses
     constraints = [(x,y) for x in range(5) for y in range(5) if x+y<5]
+    #object that keeps track of data related to utilizing pin symmetry to speed up move generation
+    symmetry = {
+        "table":[[1]*COLORS for _ in range(COLORS)],
+        "map":{-1:n for n in range(COLORS)},
+        "used_once":set(),
+        "used_twice":set()        
+    }
+
     #The algorithm will always choose this as its first guess, so there is no point in calculating it 
     guess((0,0,1,1), possible)
     #End if the correct combination was found
