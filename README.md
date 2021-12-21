@@ -8,3 +8,6 @@ The code is written in python and the application is currently terminal based.
 ## How to use 
 When in the root of the project, simply run  
 ```python mastermind.py```  
+
+## The game  
+You can read about the game [here.](https://www.wikihow.com/Play-Mastermind)
