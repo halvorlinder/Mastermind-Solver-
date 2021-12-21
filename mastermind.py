@@ -36,14 +36,14 @@ def excludes(combination, constraint, possible):
     return count
 
 #Guesses a given combination
-def guess(guess, possible):
+def guess(guess, possible, symmetry):
     old_possibilities = len(possible)
     constraintInput = input(f"The guess is {combination_to_string(guess)}. What is the response? 'red' 'white' ").split()
     constraint = (int(constraintInput[0]), int(constraintInput[1]))
     update(guess, constraint, possible)
     new_possibilities = len(possible)
     print(f"Eliminated {old_possibilities-new_possibilities} combination{'' if new_possibilities==1 else ''}. There {'is' if new_possibilities==1 else 'are'} now {new_possibilities} remaining.")
-
+    update_symmetry(symmetry, guess, constraint)
 
 #Removes all combinations that are ruled out by the constraint
 def update(guess, constraint, possible):
@@ -54,15 +54,16 @@ def update(guess, constraint, possible):
     possible-=remove_set
 
 #Updates the symmetry table given a guess and a bool 
-def update_symmetry(symmetry, guess, no_info):
+def update_symmetry(symmetry, guess, constraint):
     occurences = [0]*COLORS
     for n in guess:
-        occurences[n] = 1 if no_info else occurences[n]+1
         if n in symmetry["used_once"]:
             symmetry["used_twice"].add(n)
             for m in range(COLORS):
                 if n!=m:
                     symmetry["table"][n][m], symmetry["table"][m][n] = 0, 0
+    for n in guess:
+        occurences[n] = 1 if sum(constraint)==0 else occurences[n]+1
         symmetry["used_once"].add(n)
     sets = dict()
     for n, m in enumerate(occurences):
@@ -70,7 +71,7 @@ def update_symmetry(symmetry, guess, no_info):
             sets[m] = set()
         sets[m].add(n)
     for n in range(COLORS):
-        for S in sets:
+        for _,S in sets.items():
             if not (n in S):
                 for m in S:
                     symmetry["table"][n][m], symmetry["table"][m][n] = 0, 0
@@ -88,6 +89,14 @@ def update_symmetry(symmetry, guess, no_info):
     for i, S in enumerate(sets):
         for n in S:
             symmetry["map"][n] = COLORS+i
+
+#Returns the hash of a combination. Equal hashes => symmetric  
+def get_hash(combination, symmetry):
+    structure = dict()
+    for n in combination:
+        if not n in structure:
+            structure[n] = len(structure)
+    return tuple(map(lambda x: symmetry["map"][x], combination))+tuple(map(lambda x: structure[x], combination))
                 
      
 def main():
@@ -100,26 +109,32 @@ def main():
     #object that keeps track of data related to utilizing pin symmetry to speed up move generation
     symmetry = {
         "table":[[1]*COLORS for _ in range(COLORS)],
-        "map":{-1:n for n in range(COLORS)},
+        "map":{n:-1 for n in range(COLORS)},
         "used_once":set(),
         "used_twice":set()        
     }
 
-    #The algorithm will always choose this as its first guess, so there is no point in calculating it 
-    guess((0,0,1,1), possible)
-    #End if the correct combination was found
-    if(len(possible)==1):
-        print(f"The correct combination is: {combination_to_string(list(possible)[0])}")
-        return
-    #Print and error if input doesnt make sense
-    if(len(possible)==0):
-            print("The supplied responses lead to a contradiction!")
-            return
+    # #The algorithm will always choose this as its first guess, so there is no point in calculating it 
+    #guess((0,0,1,1), possible, symmetry)
+    # #End if the correct combination was found
+    # if(len(possible)==1):
+    #     print(f"The correct combination is: {combination_to_string(list(possible)[0])}")
+    #     return
+    # #Print an error if input doesnt make sense
+    # if(len(possible)==0):
+    #         print("The supplied responses lead to a contradiction!")
+    #         return
     while True:
         global_best = 0
         best_comb = (-1,-1,-1,-1)
+        #checked contains the hashed values of the conbinations that have been checked
+        checked = set()
         #Find the combination that has the best worst case
         for comb in combinations:
+            #If the hash already excists it means that a symmetric combination has already been checked
+            if get_hash(comb, symmetry) in checked:
+                continue
+            checked.add(get_hash(comb, symmetry))
             local_worst = inf
             for const in constraints:
                 if (exc:=excludes(comb, const, possible)) < local_worst:
@@ -128,7 +143,7 @@ def main():
                 global_best = local_worst
                 best_comb = comb
         #Guess the combination
-        guess(best_comb, possible)
+        guess(best_comb, possible, symmetry)
         if(len(possible)==1):
             print(f"The correct combination is: {combination_to_string(list(possible)[0])}")
             return
