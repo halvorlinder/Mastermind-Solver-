@@ -6,6 +6,11 @@ COLORS = 6
 colorList = ["Blue", "Green", "Yellow", "Orange", "Purple", "Pink"]
 shuffle(colorList)
 
+#We only want to print if the program is run explicitly
+def inform(message):
+    if __name__=="__main__":
+        print(message)
+
 #Returns if a combination is still possible given a guess and a constraint
 def is_possible(combination, guess, constraint):
     return (reds:=equal_pins(combination, guess))==constraint[0] and semi_equal_pins(combination, guess)-reds==constraint[1] 
@@ -37,13 +42,16 @@ def excludes(combination, constraint, possible):
     return count
 
 #Guesses a given combination
-def guess(guess, possible, symmetry):
+def guess(guess, possible, symmetry, solution=None):
     old_possibilities = len(possible)
-    constraintInput = input(f"The guess is {combination_to_string(guess)}. What is the response? 'red' 'white' ").split()
-    constraint = (int(constraintInput[0]), int(constraintInput[1]))
+    if solution!=None:
+        constraint = (reds:=equal_pins(guess, solution), semi_equal_pins(guess, solution)-reds)
+    else:
+        constraintInput = input(f"The guess is {combination_to_string(guess)}. What is the response? 'red' 'white' ").split()
+        constraint = (int(constraintInput[0]), int(constraintInput[1]))
     update(guess, constraint, possible)
     new_possibilities = len(possible)
-    print(f"Eliminated {old_possibilities-new_possibilities} combination{'' if new_possibilities==1 else ''}. There {'is' if new_possibilities==1 else 'are'} now {new_possibilities} remaining.")
+    inform(f"Eliminated {old_possibilities-new_possibilities} combination{'' if new_possibilities==1 else ''}. There {'is' if new_possibilities==1 else 'are'} now {new_possibilities} remaining.")
     update_symmetry(symmetry, guess, constraint)
 
 #Removes all combinations that are ruled out by the constraint
@@ -127,27 +135,26 @@ def get_guess_maximize_worst_case(combinations, constraints, possible, symmetry)
             global_best = local_worst
             best_comb = comb
             best_in_possible = True
-    if not best_in_possible:
-        print("\nThe guess is not in possible!\n")
+    # if not best_in_possible:
+    #     inform("\nThe guess is not in possible!\n")
     return best_comb
-     
+
+#Returns a random combination from the set of possible combinations    
 def get_guess_random_from_possible(combinations, constraints, possible, symmetry):
     return choice(tuple(possible))
 
+#Returns a random combination from the set of all combinations
 def get_guess_random_from_combinations(combinations, constraints, possible, symmetry):
     return choice(tuple(combinations)) 
 
-def main():
-    guessing_strats = {
+guessing_strats = {
         "worst_case":get_guess_maximize_worst_case,
         "random":get_guess_random_from_combinations,
         "rabdom_possible":get_guess_random_from_possible
     }
-    if(len(sys.argv)==1):
-        get_guess = get_guess_maximize_worst_case
-    else:
-        get_guess = guessing_strats[sys.argv[1]]
 
+def main(test=False, solution=None, get_guess=get_guess_maximize_worst_case):
+    number_of_guesses = 0
     #List of all possible combiinations 
     combinations = [(x,y,z,w) for x in range(COLORS) for y in range(COLORS) for z in range(COLORS) for w in range(COLORS)]
     #List of all combinations not yet ruled out
@@ -176,12 +183,20 @@ def main():
         #Get the combination to be guessed
         generated_guess = get_guess(combinations, constraints, possible, symmetry)
         #Guess the combination
-        guess(generated_guess, possible, symmetry)
+        if test:
+            guess(generated_guess, possible, symmetry, solution=solution)
+        else:
+            guess(generated_guess, possible, symmetry)
+        number_of_guesses+=1
         if(len(possible)==1):
-            print(f"The correct combination is: {combination_to_string(list(possible)[0])}")
-            return
+            inform(f"The correct combination is: {combination_to_string(list(possible)[0])}")
+            break
         if(len(possible)==0):
-            print("The supplied responses lead to a contradiction!")
-            return
-
-main()
+            inform("The supplied responses lead to a contradiction!")
+            break
+    return number_of_guesses
+if __name__=="__main__":
+    if(len(sys.argv)==1):
+        main()
+    else:
+        main(get_guess=guessing_strats[sys.argv[1]])
