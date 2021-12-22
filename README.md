@@ -11,3 +11,19 @@ When in the root of the project, simply run
 
 ## The game  
 You can read about the game [here.](https://www.wikihow.com/Play-Mastermind)
+
+## Different guessing strategies
+
+I have implemented three different strategies for guessing combinations
+
+1. Select the guess that maximizes the number of discarded guesses in the worst case
+2. Select a random combination that has not yet been ruled out
+3. Select a totally random guess
+
+Running each strategy once for each of the 6^4 possible solutions resulted in these data:
+|Category/Strategy|1: Maximize discarded|2: Random possible|3: Random|
+|---|---|---|---|
+|Most guesses|  4 | 6  | 14  |
+|Average guesses| 3.74  | 4.11  |  5.36 |  
+
+It is worth noting that strategy 2 and 3 are nondeterministic.
