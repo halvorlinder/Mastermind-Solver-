@@ -109,6 +109,9 @@ def get_hash(combination, symmetry):
 
 #Returns the guess that maximizes the number of discarded solutions in the worst case
 def get_guess_maximize_worst_case(combinations, constraints, possible, symmetry):
+    #The algorithm will always choose this as its first guess, so there is no point in calculating it 
+    if len(combinations)==len(possible):
+        return (0,0,1,1)
     global_best = 0
     best_comb = (-1,-1,-1,-1)
     #checked contains the hashed values of the conbinations that have been checked
@@ -169,16 +172,6 @@ def main(test=False, solution=None, get_guess=get_guess_maximize_worst_case):
         "used_twice":set()        
     }
     
-    # #The algorithm will always choose this as its first guess, so there is no point in calculating it 
-    #guess((0,0,1,1), possible, symmetry)
-    # #End if the correct combination was found
-    # if(len(possible)==1):
-    #     print(f"The correct combination is: {combination_to_string(list(possible)[0])}")
-    #     return
-    # #Print an error if input doesnt make sense
-    # if(len(possible)==0):
-    #         print("The supplied responses lead to a contradiction!")
-    #         return
     while True:
         #Get the combination to be guessed
         generated_guess = get_guess(combinations, constraints, possible, symmetry)
