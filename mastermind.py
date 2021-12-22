@@ -129,7 +129,11 @@ def main():
         best_comb = (-1,-1,-1,-1)
         #checked contains the hashed values of the conbinations that have been checked
         checked = set()
-        #Find the combination that has the best worst case
+        #We want to guess from possible when it contains a tied best guess, this is tracked by this bool
+        best_in_possible = False
+        #Find the combination that has the best worst case, all combinations need be concidered, as the guess
+        #that eliminates the highest number of possibilities could lie outside the set of possible solutions
+        #I found this by empirical evidence
         for comb in combinations:
             #If the hash already excists it means that a symmetric combination has already been checked
             if get_hash(comb, symmetry) in checked:
@@ -142,6 +146,13 @@ def main():
             if local_worst > global_best:
                 global_best = local_worst
                 best_comb = comb
+                best_in_possible = comb in possible
+            elif (not best_in_possible) and local_worst==global_best and (comb in possible):
+                global_best = local_worst
+                best_comb = comb
+                best_in_possible = True
+        if not best_in_possible:
+            print("\nThe guess is not in possible!\n")
         #Guess the combination
         guess(best_comb, possible, symmetry)
         if(len(possible)==1):
