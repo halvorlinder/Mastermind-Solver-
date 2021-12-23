@@ -19,11 +19,12 @@ I have implemented three different strategies for guessing combinations
 1. Select the guess that maximizes the number of discarded guesses in the worst case
 2. Select a random combination that has not yet been ruled out
 3. Select a totally random guess
+4. Select the guess that maximizes the excpected value of the number of discarded guesses
 
 Running each strategy once for each of the 6^4 possible solutions resulted in these data:
-|Category/Strategy|1: Maximize discarded|2: Random possible|3: Random|
-|---|---|---|---|
-|Most guesses|  4 | 6  | 14  |
-|Average guesses| 3.74  | 4.11  |  5.36 |  
+|Category/Strategy|1: Maximize worst case|2: Random possible|3: Random |4: Maximize excpected|
+|---|---|---|---|---|
+|Most guesses|  4 | 6  | 14  | 5 |
+|Average guesses| 3.74  | 4.11  |  5.36 |  3.66 |
 
 It is worth noting that strategy 2 and 3 are nondeterministic.
