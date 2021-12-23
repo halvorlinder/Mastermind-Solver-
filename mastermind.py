@@ -33,6 +33,9 @@ def semi_equal_pins(comb1, comb2):
         B[pin]+=1
     return sum(map(lambda a: min(a[0],a[1]), zip(A,B)))
 
+def get_constraint(comb1, comb2):
+    return (reds:=equal_pins(comb1, comb2), semi_equal_pins(comb1, comb2)-reds)
+
 #Returns the number of combinations ruled out by a guess and a constraint    
 def excludes(combination, constraint, possible):
     count = 0
@@ -142,6 +145,48 @@ def get_guess_maximize_worst_case(combinations, constraints, possible, symmetry)
     #     inform("\nThe guess is not in possible!\n")
     return best_comb
 
+#Returns the guess that maximizes the number of discarded solutions in the worst case
+def get_guess_maximize_expected(combinations, constraints, possible, symmetry):
+    #The algorithm will always choose this as its first guess, so there is no point in calculating it 
+    if len(combinations)==len(possible):
+        return (0,0,1,2)
+    best = 0
+    best_comb = (-1,-1,-1,-1)
+    #checked contains the hashed values of the conbinations that have been checked
+    checked = set()
+    #We want to guess from possible when it contains a tied best guess, this is tracked by this bool
+    best_in_possible = False
+    #Find the combination that has the best worst case, all combinations need be concidered, as the guess
+    #that eliminates the highest number of possibilities could lie outside the set of possible solutions
+    #I found this by empirical evidence
+    for comb in combinations:
+        #If the hash already excists it means that a symmetric combination has already been checked
+        if get_hash(comb, symmetry) in checked:
+            continue
+        checked.add(get_hash(comb, symmetry))
+        score = 0
+        #Calculate the number of possible solutions that produce each constraint and use this to calculate the excpected 
+        #value of the number of discarded solutions 
+        distribution = get_distribution(comb, possible, constraints)
+        for const in constraints:
+            score+=excludes(comb, const, possible)*distribution[const]
+        if score > best:
+            best = score
+            best_comb = comb
+            best_in_possible = comb in possible
+        elif (not best_in_possible) and score==best and (comb in possible):
+            best = score
+            best_comb = comb
+            best_in_possible = True
+    return best_comb
+
+#Returns the probability distribution of getting the different constraints
+def get_distribution(combination, possible, constraints):
+    distribution = {const:0 for const in constraints}
+    for solution in possible:
+        distribution[get_constraint(combination, solution)]+=1
+    return distribution
+
 #Returns a random combination from the set of possible combinations    
 def get_guess_random_from_possible(combinations, constraints, possible, symmetry):
     return choice(tuple(possible))
@@ -153,7 +198,8 @@ def get_guess_random_from_combinations(combinations, constraints, possible, symm
 guessing_strats = {
         "worst_case":get_guess_maximize_worst_case,
         "random":get_guess_random_from_combinations,
-        "rabdom_possible":get_guess_random_from_possible
+        "rabdom_possible":get_guess_random_from_possible,
+        "excpected":get_guess_maximize_expected
     }
 
 def main(test=False, solution=None, get_guess=get_guess_maximize_worst_case):
