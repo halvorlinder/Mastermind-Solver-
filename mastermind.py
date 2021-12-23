@@ -65,7 +65,7 @@ def update(guess, constraint, possible):
             remove_set.add(comb)
     possible-=remove_set
 
-#Updates the symmetry table given a guess and a bool 
+#Updates the symmetry table given a guess and a constraint 
 def update_symmetry(symmetry, guess, constraint):
     occurences = [0]*COLORS
     for n in guess:
