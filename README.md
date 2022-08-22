@@ -1,5 +1,5 @@
 # Mastermind
-A python script that helps you beat the board game mastermind everytime in a few moves.
+A python script that helps you beat the board game mastermind every time in a few moves.
 
 The code is written in python and the application is currently terminal based.
 
